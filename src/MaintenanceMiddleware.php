@@ -39,9 +39,7 @@ final class MaintenanceMiddleware
         if (!is_int($seconds)) {
             throw new \InvalidArgumentException('Seconds must be integer');
         }
-
         $instance = new self();
-
         $instance->retryAfter = (string) $seconds;
 
         return $instance;
@@ -52,7 +50,7 @@ final class MaintenanceMiddleware
      *
      * @return self
      */
-    public function createWithRetryAsSecondsAndRefresh($seconds)
+    public static function createWithRetryAsSecondsAndRefresh($seconds)
     {
         $instance = self::createWithRetryAsSeconds($seconds);
         $instance->refresh = $seconds;
