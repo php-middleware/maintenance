@@ -2,6 +2,7 @@
     "name": "php-middleware/maintenance",
     "description": "Site maintenance middleware SEO friendly with PSR-7",
     "type": "library",
+    "license": "MIT",
     "keywords": [
         "middleware",
         "psr",
