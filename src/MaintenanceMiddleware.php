@@ -2,11 +2,19 @@
 
 namespace PhpMiddleware\Maintenance;
 
-use Psr\Http\Message\ResponseInterface;
+use DateTime;
+use DateTimeInterface;
+use Interop\Http\ServerMiddleware\DelegateInterface;
+use Interop\Http\ServerMiddleware\MiddlewareInterface;
+use InvalidArgumentException;
+use PhpMiddleware\DoublePassCompatibilityTrait;
 use Psr\Http\Message\ServerRequestInterface;
+use Zend\Diactoros\Response;
 
-final class MaintenanceMiddleware
+final class MaintenanceMiddleware implements MiddlewareInterface
 {
+    use DoublePassCompatibilityTrait;
+
     /**
      * @var string
      */
@@ -22,7 +30,7 @@ final class MaintenanceMiddleware
     }
 
     /**
-     * @return \self
+     * @return self
      */
     public static function create()
     {
@@ -37,7 +45,7 @@ final class MaintenanceMiddleware
     public static function createWithRetryAsSeconds($seconds)
     {
         if (!is_int($seconds)) {
-            throw new \InvalidArgumentException('Seconds must be integer');
+            throw new InvalidArgumentException('Seconds must be integer');
         }
         $instance = new self();
         $instance->retryAfter = (string) $seconds;
@@ -59,25 +67,25 @@ final class MaintenanceMiddleware
     }
 
     /**
-     * @param \DateTimeInterface $datetime
+     * @param DateTimeInterface $datetime
      *
      * @return self
      */
-    public static function createWithRetryAsDateTime(\DateTimeInterface $datetime)
+    public static function createWithRetryAsDateTime(DateTimeInterface $datetime)
     {
         $instance = new self();
 
-        $instance->retryAfter = $datetime->format(\DateTime::RFC2822);
+        $instance->retryAfter = $datetime->format(DateTime::RFC2822);
 
         return $instance;
     }
 
     /**
-     * @param \DateTimeInterface $datetime
+     * @param DateTimeInterface $datetime
      *
      * @return self
      */
-    public static function createWithRetryAsDateTimeAndRefresh(\DateTimeInterface $datetime)
+    public static function createWithRetryAsDateTimeAndRefresh(DateTimeInterface $datetime)
     {
         $instance = self::createWithRetryAsDateTime($datetime);
         $diff = time() - $datetime->getTimestamp();
@@ -86,23 +94,19 @@ final class MaintenanceMiddleware
         return $instance;
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param ResponseInterface $response
-     * @param callable $next
-     *
-     * @return ResponseInterface
-     */
-    public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $next)
+    public function process(ServerRequestInterface $request, DelegateInterface $delegate)
     {
+        $headers = [];
+
         if ($this->retryAfter !== '') {
-            $response = $response->withHeader('Retry-After', $this->retryAfter);
+            $headers['Retry-After'] = $this->retryAfter;
 
             if ($this->refresh > 0) {
-                $response = $response->withHeader('Refresh', (string) $this->refresh);
+                $headers['Refresh'] = (string) $this->refresh;
             }
         }
 
-        return $response->withStatus(503);
+        return new Response('php://memory', 503, $headers);
     }
+
 }
