@@ -26,10 +26,6 @@ More about this SEO practice: [How to deal with planned site downtime](http://go
 
 Use composer!
 
-```json
-{
-    "require": {
-        "php-middleware/maintenance": "^1.0.0"
-    }
-}
+```bash
+composer require php-middleware/maintenance
 ```
