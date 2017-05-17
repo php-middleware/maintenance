@@ -5,11 +5,11 @@ namespace PhpMiddlewareTest\Maintenance;
 use DateTime;
 use Exception;
 use PhpMiddleware\Maintenance\MaintenanceMiddleware;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use Zend\Diactoros\Response;
 use Zend\Diactoros\ServerRequest;
 
-class MaintenanceMiddlewareTest extends PHPUnit_Framework_TestCase
+class MaintenanceMiddlewareTest extends TestCase
 {
     public function testWithoutRetry()
     {
