@@ -9,7 +9,7 @@
         "psr-7",
         "maintenance",
         "psr-15",
-        "psr-11"
+        "psr-17"
     ],
     "require": {
         "php": ">=7.1",

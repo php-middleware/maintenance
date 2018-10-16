@@ -2,6 +2,7 @@
 
 namespace PhpMiddleware\Maintenance;
 
+use DateTime;
 use DateTimeInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -51,7 +52,7 @@ final class MaintenanceMiddleware implements RequestHandlerInterface, Middleware
     public static function createWithRetryAsDateTime(DateTimeInterface $datetime, ResponseFactoryInterface $responseFactory): self
     {
         $instance = new self($responseFactory);
-        $instance->retryAfter = $datetime->format(DateTimeInterface::RFC2822);
+        $instance->retryAfter = $datetime->format(DateTime::RFC2822);
 
         return $instance;
     }
