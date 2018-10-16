@@ -6,23 +6,47 @@ use DateTime;
 use Exception;
 use PhpMiddleware\Maintenance\MaintenanceMiddleware;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Zend\Diactoros\Response;
+use Zend\Diactoros\ResponseFactory;
 use Zend\Diactoros\ServerRequest;
+use Zend\Diactoros\ServerRequestFactory;
 
 class MaintenanceMiddlewareTest extends TestCase
 {
+    private $request;
+    private $responseFactory;
+
+    protected function setUp()
+    {
+        $this->request = new ServerRequest();
+        $this->responseFactory = new ResponseFactory();
+    }
+
     public function testWithoutRetry()
     {
-        $request = new ServerRequest();
-        $response = new Response();
+        $middleware = MaintenanceMiddleware::create($this->responseFactory);
 
-        $middleware = MaintenanceMiddleware::create();
+        $response = $middleware->handle($this->request);
 
-        $next = function() {
-            throw new Exception('Next should not be called');
+        $this->assertSame(503, $response->getStatusCode());
+        $this->assertSame('', $response->getHeaderLine('Retry-After'));
+    }
+
+    public function testWithoutRetryAsMiddleware()
+    {
+        $middleware = MaintenanceMiddleware::create($this->responseFactory);
+
+        $requestHandler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response();
+            }
         };
 
-        $response = $middleware->__invoke($request, $response, $next);
+        $response = $middleware->process($this->request, $requestHandler);
 
         $this->assertSame(503, $response->getStatusCode());
         $this->assertSame('', $response->getHeaderLine('Retry-After'));
@@ -30,16 +54,9 @@ class MaintenanceMiddlewareTest extends TestCase
 
     public function testWithRetryAsSeconds()
     {
-        $request = new ServerRequest();
-        $response = new Response();
+        $middleware = MaintenanceMiddleware::createWithRetryAsSeconds(3600, $this->responseFactory);
 
-        $middleware = MaintenanceMiddleware::createWithRetryAsSeconds(3600);
-
-        $next = function() {
-            throw new Exception('Next should not be called');
-        };
-
-        $response = $middleware->__invoke($request, $response, $next);
+        $response = $middleware->handle($this->request);
 
         $this->assertSame(503, $response->getStatusCode());
         $this->assertSame('3600', $response->getHeaderLine('Retry-After'));
@@ -48,16 +65,9 @@ class MaintenanceMiddlewareTest extends TestCase
 
     public function testWithRetryAsSecondsWithRefresh()
     {
-        $request = new ServerRequest();
-        $response = new Response();
+        $middleware = MaintenanceMiddleware::createWithRetryAsSecondsAndRefresh(3600, $this->responseFactory);
 
-        $middleware = MaintenanceMiddleware::createWithRetryAsSecondsAndRefresh(3600);
-
-        $next = function() {
-            throw new Exception('Next should not be called');
-        };
-
-        $response = $middleware->__invoke($request, $response, $next);
+        $response = $middleware->handle($this->request);
 
         $this->assertSame(503, $response->getStatusCode());
         $this->assertSame('3600', $response->getHeaderLine('Retry-After'));
@@ -66,18 +76,11 @@ class MaintenanceMiddlewareTest extends TestCase
 
     public function testWithRetryAsDatetime()
     {
-        $request = new ServerRequest();
-        $response = new Response();
-
         $date = DateTime::createFromFormat('Y-m-d H:i:s', '2015-11-30 11:12:13');
 
-        $middleware = MaintenanceMiddleware::createWithRetryAsDateTime($date);
+        $middleware = MaintenanceMiddleware::createWithRetryAsDateTime($date, $this->responseFactory);
 
-        $next = function() {
-            throw new Exception('Next should not be called');
-        };
-
-        $response = $middleware->__invoke($request, $response, $next);
+        $response = $middleware->handle($this->request);
 
         $this->assertSame(503, $response->getStatusCode());
         $this->assertSame('Mon, 30 Nov 2015 11:12:13 +0000', $response->getHeaderLine('Retry-After'));
@@ -86,18 +89,11 @@ class MaintenanceMiddlewareTest extends TestCase
 
     public function testWithRetryAsDatetimeWithRefresh()
     {
-        $request = new ServerRequest();
-        $response = new Response();
-
         $date = DateTime::createFromFormat('Y-m-d H:i:s', '2015-11-30 11:12:13');
 
-        $middleware = MaintenanceMiddleware::createWithRetryAsDateTimeAndRefresh($date);
+        $middleware = MaintenanceMiddleware::createWithRetryAsDateTimeAndRefresh($date, $this->responseFactory);
 
-        $next = function() {
-            throw new Exception('Next should not be called');
-        };
-
-        $response = $middleware->__invoke($request, $response, $next);
+        $response = $middleware->handle($this->request);
 
         $this->assertSame(503, $response->getStatusCode());
         $this->assertSame('Mon, 30 Nov 2015 11:12:13 +0000', $response->getHeaderLine('Retry-After'));

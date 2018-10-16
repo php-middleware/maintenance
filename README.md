@@ -8,7 +8,7 @@ Create instance of middleware as you want (we use [named constructors](http://ve
 ```php
 $date = DateTime::createFromFormat('Y-m-d H:i:s', '2025-11-30 11:12:13');
 
-$middleware = MaintenanceMiddleware::createWithRetryAsDateTime($date);
+$middleware = MaintenanceMiddleware::createWithRetryAsDateTime($date, $psr17ResponseFactory);
 
 $middlewareRunner->add(middleware);
 $middlewareRunner->run();
@@ -29,3 +29,5 @@ Use composer!
 ```bash
 composer require php-middleware/maintenance
 ```
+
+This package require [PSR-17 message factory](https://packagist.org/providers/psr/http-factory-implementation) implementation to return SEO friendly response.
