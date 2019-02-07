@@ -10,7 +10,7 @@ $date = DateTime::createFromFormat('Y-m-d H:i:s', '2025-11-30 11:12:13');
 
 $middleware = MaintenanceMiddleware::createWithRetryAsDateTime($date, $psr17ResponseFactory);
 
-$middlewareRunner->add(middleware);
+$middlewareRunner->add($middleware);
 $middlewareRunner->run();
 ```
 
